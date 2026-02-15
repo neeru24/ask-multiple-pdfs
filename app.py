@@ -6,7 +6,7 @@ import base64
 import streamlit.components.v1 as components
 
 from langchain_text_splitters import CharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_ollama import OllamaLLM
 
@@ -58,8 +58,8 @@ def get_text_chunks(text):
 # VECTOR STORE
 # -------------------------------
 def get_vectorstore(text_chunks):
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/paraphrase-MiniLM-L3-v2"
+    embeddings = OllamaEmbeddings(
+        model="nomic-embed-text"
     )
 
     vectorstore = FAISS.from_texts(
@@ -70,8 +70,45 @@ def get_vectorstore(text_chunks):
     return vectorstore
 
 
+
+@st.cache_resource
+def load_llm():
+    return OllamaLLM(
+        model="phi3:mini",
+        temperature=0.2,
+        num_predict=150, 
+        keep_alive=-1
+    )
+
+
+ 
+#  LLm - general ai (Chat-gpt mode)
+
+def ask_general_llm(question, language):
+    llm = load_llm()
+
+    if language == "Hindi":
+        lang_instruction = "Answer in Hindi only."
+    else:
+        lang_instruction = "Answer in English only."
+
+    prompt = f"""
+You are an intelligent AI assistant.
+{lang_instruction}
+
+Answer clearly and completely.
+Give structured responses when needed.
+
+Question:
+{question}
+"""
+
+    return llm.invoke(prompt)
+
+
+
 # -------------------------------
-# ASK LLM
+#  ASK LLM (Rag mode if the working with documents)
 # -------------------------------
 def ask_llm(vectorstore, question, language):
 
@@ -97,17 +134,13 @@ Context:
 Question:
 {question}
 
-Answer in 5 lines maximum:
+ Answer clearly and concisely:
 """
 
-    llm = OllamaLLM(
-        model="phi3:mini",
-        temperature=0,
-        num_ctx=256,
-        num_predict=80
-    )
-
+    llm = load_llm()
     return llm.invoke(prompt)
+
+
 
 
 # -------------------------------
@@ -228,9 +261,9 @@ def main():
 
     if user_question:
 
-        if st.session_state.vectorstore is None:
-            st.warning("Please upload and process documents first." if lang=="English" else "पहले दस्तावेज़ अपलोड और प्रोसेस करें।")
-            st.stop()
+        # if st.session_state.vectorstore is None:
+        #     st.warning("Please upload and process documents first." if lang=="English" else "पहले दस्तावेज़ अपलोड और प्रोसेस करें।")
+        #     st.stop()
 
         st.session_state.messages.append(
             {"role": "user", "content": user_question}
@@ -241,12 +274,19 @@ def main():
 
         with st.chat_message("assistant"):
             with st.spinner("Thinking..." if lang=="English" else "सोच रहा हूँ..."):
-                answer = ask_llm(st.session_state.vectorstore, user_question, lang)
+                if st.session_state.vectorstore is not None:
+                    answer = ask_llm(st.session_state.vectorstore, user_question,lang)
+                else:
+                    answer = ask_general_llm(user_question,lang)
+
                 st.markdown(answer)
 
+        # Save assistant message
         st.session_state.messages.append(
             {"role": "assistant", "content": answer}
         )
+
+
 
 
 if __name__ == "__main__":
