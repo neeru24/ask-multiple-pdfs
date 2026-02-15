@@ -2,12 +2,11 @@ import streamlit as st
 from dotenv import load_dotenv
 from pypdf import PdfReader
 
-from langchain.text_splitter import CharacterTextSplitter
+from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.llms import Ollama
-from langchain.chains import RetrievalQA
-from pypdf import PdfReader
+from langchain_classic.chains import RetrievalQA
 
 # -------------------------------
 # PDF TEXT EXTRACTION
