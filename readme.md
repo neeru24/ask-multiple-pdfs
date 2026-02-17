@@ -1,7 +1,7 @@
 # 📚 Chat with Multiple PDFs (Offline AI)
 An Offline AI PDF Question Answering System built using:
 
-🧠 Ollama (Local LLM – phi3:mini)
+🧠 Ollama (Local LLM – phi3)
 🔎 FAISS (Vector Database)
 🔗 LangChain (Retrieval Pipeline)
 📄 Sentence Transformers (Embeddings)
@@ -55,7 +55,7 @@ Verify installation:
 ollama --version
 
 Step 5 — Pull Required Model
-ollama pull phi3:mini
+ollama pull phi3
 You can check installed models:
 ollama list
 
